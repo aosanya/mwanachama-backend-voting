@@ -26,12 +26,16 @@ type PollManager interface {
 
 	AddChoice(ctx context.Context, in Choice) (Choice, error)
 	ListChoices(ctx context.Context, pollID string) ([]Choice, error)
+
+	AnswerPoll(ctx context.Context, in Answer) (Participation, error)
+	UseGroups(fn Groups)
 }
 
 type pollManager struct {
-	db  *gorm.DB
-	st  *store
-	now func() string
+	db     *gorm.DB
+	st     *store
+	now    func() string
+	groups Groups
 }
 
 func NewPollManager(db *gorm.DB, s *spec.Spec) (PollManager, error) {

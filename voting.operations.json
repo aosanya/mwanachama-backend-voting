@@ -47,6 +47,21 @@
       "description": "List a poll's choices in order.",
       "args": [{ "from": "path", "as": "pollID", "description": "The poll whose choices to list." }],
       "returns": [{ "body": true }]
+    },
+    "answer_poll": {
+      "method": "POST",
+      "path": "/polls/{pollID}/answers",
+      "call": "AnswerPoll",
+      "action": "voting.answer.create",
+      "status": 201,
+      "title": "Answer poll",
+      "description": "Answer a poll inside its window, from a caller in one of its groups: the votes placed on each choice, keyed by choice id, and under per_group the group the answer is for. Answers with who answered and when; what was chosen is kept apart.",
+      "args": [
+        { "from": "body", "whole": true },
+        { "from": "path", "as": "pollID", "into": "PollID", "description": "The poll answered. The address decides, not the body." },
+        { "from": "caller", "as": "answered_by", "into": "AnsweredBy", "description": "Who answered, supplied by the mount. Never read from the request." }
+      ],
+      "returns": [{ "body": true }]
     }
   },
   "errors": {
@@ -54,6 +69,11 @@
     "ErrInvalidPoll": 400,
     "ErrInvalidChoice": 400,
     "ErrNoCreator": 401,
-    "ErrPollNotDraft": 409
+    "ErrPollNotDraft": 409,
+    "ErrNoAnswerer": 401,
+    "ErrOutsideWindow": 409,
+    "ErrNotInPollGroups": 404,
+    "ErrInvalidAnswer": 400,
+    "ErrAlreadyAnswered": 409
   }
 }

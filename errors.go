@@ -9,3 +9,11 @@ var (
 	ErrNoCreator     = errors.New("a poll needs a caller to stand behind it")
 	ErrPollNotDraft  = errors.New("a poll's choices change only while it is a draft")
 )
+
+var (
+	ErrNoAnswerer      = errors.New("an answer needs a caller to give it")
+	ErrOutsideWindow   = errors.New("the poll is not taking answers now")
+	ErrNotInPollGroups = errors.New("the caller is not in a group the poll goes to")
+	ErrInvalidAnswer   = errors.New("invalid answer")
+	ErrAlreadyAnswered = errors.New("this poll keeps the first answer")
+)

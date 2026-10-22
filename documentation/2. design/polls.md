@@ -127,3 +127,46 @@ when the choice list is final. The poll row and its choice rows are written
 one after another rather than in one transaction: every check runs before the
 first write, so only a database failure can leave a poll without its
 choices.
+
+## As built (VT3, 2026-10-22)
+
+`POST /polls/{pollID}/answers` (`voting.answer.create`, `AnswerPoll`) takes
+`votes`, keyed by choice id, and under `per_group` the `group_id` the answer
+is for. The poll comes from the address and who answered from the caller
+(`answered_by`, bound `from: caller`); a body naming either is overwritten,
+and no caller is 401. It answers with the participation only: who answered,
+for which group, when. What was chosen is written to the ballot and never
+returned beside it.
+
+**The caller's groups are the host's fact.** `UseGroups(fn)` gives the
+manager a `Groups` function, `func(ctx, caller) ([]string, error)`, that the
+host fills from its own membership; the module asks it on every answer and
+stores nothing it returns. A manager given none puts the caller in no group,
+so it takes no answer. The same shape as comm's `UseBelonging`.
+
+The checks run in this order, all before the first write:
+
+1. A caller: `ErrNoAnswerer`, 401.
+2. The poll exists: `ErrPollNotFound`, 404.
+3. Inside the window, `opens_at` included and `closes_at` excluded, compared
+   as instants rather than as text (a stored `opens_at` need not carry the
+   store's nanosecond layout): `ErrOutsideWindow`, 409.
+4. The group. Under `once`, the caller is in at least one of the poll's
+   groups and the stored `group_id` is empty. Under `per_group`, the answer
+   names a group that is both one of the poll's and one of the caller's.
+   Otherwise `ErrNotInPollGroups`, 404, the same answer as a missing poll.
+5. The votes, against the poll's choices and mode: every key a choice on
+   this poll, every count at least 1; `one` exactly one choice with one
+   vote; `up_to` between 1 and N choices, one vote each; `quadratic` the sum
+   of each count squared within the budget. Otherwise `ErrInvalidAnswer`,
+   400.
+6. A second answer, found by `(poll_id, answered_by, group_id)`: refused
+   with `ErrAlreadyAnswered`, 409, unless the poll allows a change. A change
+   keeps the response id, deletes the old participation and its ballot and
+   writes both again, so there is never more than one ballot per response
+   and a count cannot see the old choice. The unique index on the
+   participation is the database's half of the same rule.
+
+**Not checked yet:** the poll's `state`. Nothing opens a poll so far, so an
+answer is taken from a draft inside its window; the state check, and holding
+`up_to`'s N to the final choice list, land with the open step.
