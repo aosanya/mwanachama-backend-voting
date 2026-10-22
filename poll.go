@@ -24,12 +24,43 @@ func (m *pollManager) CreatePoll(ctx context.Context, in Poll) (Poll, error) {
 	if err := settingsHold(in); err != nil {
 		return Poll{}, fmt.Errorf("%w: %s", ErrInvalidPoll, err)
 	}
+	choices, err := m.choicesHold(in)
+	if err != nil {
+		return Poll{}, err
+	}
 	in.ID = newID()
 	in.CreatedAt = m.now()
+	in.Choices = nil
 	if err := m.st.Insert(ctx, objectPoll, in); err != nil {
 		return Poll{}, fmt.Errorf("CreatePoll: %w", err)
 	}
+	for i := range choices {
+		choices[i].ID = newID()
+		choices[i].PollID = in.ID
+		choices[i].Position = i + 1
+		choices[i].CreatedAt = in.CreatedAt
+		if err := m.st.Insert(ctx, objectChoice, choices[i]); err != nil {
+			return Poll{}, fmt.Errorf("CreatePoll: %w", err)
+		}
+	}
+	in.Choices = choices
 	return in, nil
+}
+
+func (m *pollManager) choicesHold(p Poll) ([]Choice, error) {
+	out := make([]Choice, 0, len(p.Choices))
+	for _, c := range p.Choices {
+		c.PollID = "pending"
+		if err := m.checks(objectChoice, c, ErrInvalidChoice); err != nil {
+			return nil, err
+		}
+		out = append(out, Choice{Label: c.Label})
+	}
+	if p.Mode == models.ModeUpTo && len(out) > 0 && p.MaxChoices > len(out) {
+		return nil, fmt.Errorf("%w: max_choices %d is more than the poll's %d choices",
+			ErrInvalidPoll, p.MaxChoices, len(out))
+	}
+	return out, nil
 }
 
 func settingsHold(p Poll) error {

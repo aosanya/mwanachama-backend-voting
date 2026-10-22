@@ -17,6 +17,7 @@ type Poll struct {
 	PublishedGroupIDs []string `json:"published_group_ids,omitempty"`
 	CreatedBy         string   `json:"created_by,omitempty"`
 	CreatedAt         string   `json:"created_at"`
+	Choices           []Choice `json:"choices,omitempty" spec:"-"`
 }
 
 type Choice struct {

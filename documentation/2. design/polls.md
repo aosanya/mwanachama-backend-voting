@@ -111,3 +111,19 @@ are later rows. `domain_agnostic_test.go`'s word list does not carry `role`:
 it is the declared-domain engine's own word for an object's slot
 (`spec.ByRole`), not a domain's. It carries `member` and `election` and the
 nouns of the two example domains (`club`, `school`).
+
+## As built (VT2, 2026-10-22)
+
+A poll is saved with its choices in one call: `choices` on the create body is
+a list of labels, carried on `Poll` but not stored on the poll row
+(`spec:"-"`); each becomes a `choice` row in the order given, numbered from
+one, with its id, poll and time minted by the store whatever the body says.
+Choices may still be added one at a time to a draft afterwards.
+
+Save now refuses, besides VT1's checks, a choice with no label and an
+`up_to` whose N is more than the choices it was saved with. A poll saved
+with no choices is not held to N yet; that check waits for the open step,
+when the choice list is final. The poll row and its choice rows are written
+one after another rather than in one transaction: every check runs before the
+first write, so only a database failure can leave a poll without its
+choices.

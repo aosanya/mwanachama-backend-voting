@@ -106,3 +106,41 @@ func TestAChoiceNeedsAPollThatExists(t *testing.T) {
 		t.Fatalf("err = %v, want ErrPollNotFound", err)
 	}
 }
+
+func TestAPollSavedWithItsChoicesKeepsThemInOrder(t *testing.T) {
+	ctx := context.Background()
+	pm := newTestManager(t)
+	in := aPoll()
+	in.Mode, in.MaxChoices = "up_to", 2
+	in.Choices = []voting.Choice{{Label: "Monday", PollID: "elsewhere", ID: "forged"}, {Label: "Tuesday"}, {Label: "Friday"}}
+	p, err := pm.CreatePoll(ctx, in)
+	if err != nil {
+		t.Fatalf("CreatePoll: %v", err)
+	}
+	cs, err := pm.ListChoices(ctx, p.ID)
+	if err != nil || len(cs) != 3 || cs[0].Label != "Monday" || cs[0].ID == "forged" || cs[2].Position != 3 {
+		t.Fatalf("ListChoices = %+v, %v", cs, err)
+	}
+	if len(p.Choices) != 3 || p.Choices[0].PollID != p.ID {
+		t.Fatalf("CreatePoll choices = %+v", p.Choices)
+	}
+}
+
+func TestSaveRefusesAnUpToOverItsChoices(t *testing.T) {
+	ctx := context.Background()
+	pm := newTestManager(t)
+	in := aPoll()
+	in.Mode, in.MaxChoices = "up_to", 3
+	in.Choices = []voting.Choice{{Label: "Monday"}, {Label: "Tuesday"}}
+	if _, err := pm.CreatePoll(ctx, in); !errors.Is(err, voting.ErrInvalidPoll) {
+		t.Fatalf("err = %v, want ErrInvalidPoll", err)
+	}
+}
+
+func TestSaveRefusesAChoiceWithNoLabel(t *testing.T) {
+	in := aPoll()
+	in.Choices = []voting.Choice{{Label: "Monday"}, {Label: " "}}
+	if _, err := newTestManager(t).CreatePoll(context.Background(), in); !errors.Is(err, voting.ErrInvalidChoice) {
+		t.Fatalf("err = %v, want ErrInvalidChoice", err)
+	}
+}
