@@ -1,0 +1,11 @@
+{
+  "module": "voting",
+  "domain": "club",
+  "instance": "league",
+  "objects": [
+    { "role": "poll", "name": "motion", "table": "motions", "description": "A motion put to the club's teams." },
+    { "role": "choice", "name": "option", "table": "options", "description": "One option on a motion." },
+    { "role": "participation", "name": "turnout", "table": "turnouts", "description": "Who took part in a motion." },
+    { "role": "ballot", "name": "slip", "table": "slips", "description": "What was chosen on a motion." }
+  ]
+}

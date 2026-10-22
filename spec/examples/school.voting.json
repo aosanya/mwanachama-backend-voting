@@ -1,0 +1,11 @@
+{
+  "module": "voting",
+  "domain": "school",
+  "instance": "campus",
+  "objects": [
+    { "role": "poll", "name": "question", "table": "questions", "description": "A question put to the school's classes." },
+    { "role": "choice", "name": "option", "table": "options", "description": "One option on a question." },
+    { "role": "participation", "name": "attendance", "table": "attendances", "description": "Who took part in a question." },
+    { "role": "ballot", "name": "card", "table": "cards", "description": "What was chosen on a question." }
+  ]
+}

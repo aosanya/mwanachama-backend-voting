@@ -80,3 +80,34 @@ participation record still stops double voting and the choice record still
 counts, and no row ties the two. Nothing in counting or publishing reads the
 link, so the later step changes what is written, not how anything is
 counted.
+
+## As built (VT1, 2026-10-22)
+
+The scaffold declares four objects in `voting.blueprint.json`: `poll`,
+`choice`, and the response as its two records, `participation` (who answered)
+and `ballot` (what was chosen). The participation's id is the response id;
+the ballot's `response_id` is the link a secret ballot will leave empty. The
+ballot carries no `answered_by` and no `answered_at`, and the participation
+carries no `votes`; `TestWhoAnsweredIsKeptApartFromWhatWasChosen` holds that.
+Votes are a JSON object keyed by choice id, so `one`, `up_to` and `quadratic`
+share one shape.
+
+Who answered is `answered_by`, not `member_id`: the module names no member
+(CLAUDE.md), and the host supplies the id from the caller. A unique index on
+`(poll_id, answered_by, group_id)` is the database's half of "one answer per
+person", with `group_id` empty under `once`.
+
+The operations file declares four addresses, every one gated: make a poll,
+read it, add a choice, list choices. A new poll is always a draft whatever
+the body says, `created_by` is bound from the caller (no caller is 401), and
+choices change only while the poll is a draft (409 otherwise). Save refuses
+a poll that goes to no group, whose window is backwards, an `up_to` with no
+N and a `quadratic` with a budget below 1. The `up_to` against the number of
+choices check waits for the open step, because a draft gains its choices
+after it is saved.
+
+Answering, counting, opening, closing, publishing and the settings layers
+are later rows. `domain_agnostic_test.go`'s word list does not carry `role`:
+it is the declared-domain engine's own word for an object's slot
+(`spec.ByRole`), not a domain's. It carries `member` and `election` and the
+nouns of the two example domains (`club`, `school`).

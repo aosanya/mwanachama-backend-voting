@@ -1,0 +1,94 @@
+package voting
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/aosanya/mwanachama-backend-shared/specstore"
+
+	"github.com/aosanya/mwanachama-backend-voting/models"
+)
+
+func (m *pollManager) CreatePoll(ctx context.Context, in Poll) (Poll, error) {
+	if in.CreatedBy == "" {
+		return Poll{}, ErrNoCreator
+	}
+	in.State = models.StateDraft
+	in.PublishedAt, in.PublishedBy, in.PublishedGroupIDs = "", "", nil
+	if in.PerGroup == "" {
+		in.PerGroup = models.PerGroupOnce
+	}
+	if err := m.checks(objectPoll, in, ErrInvalidPoll); err != nil {
+		return Poll{}, err
+	}
+	if err := settingsHold(in); err != nil {
+		return Poll{}, fmt.Errorf("%w: %s", ErrInvalidPoll, err)
+	}
+	in.ID = newID()
+	in.CreatedAt = m.now()
+	if err := m.st.Insert(ctx, objectPoll, in); err != nil {
+		return Poll{}, fmt.Errorf("CreatePoll: %w", err)
+	}
+	return in, nil
+}
+
+func settingsHold(p Poll) error {
+	if len(p.GroupIDs) == 0 {
+		return fmt.Errorf("a poll goes to at least one group")
+	}
+	if p.ClosesAt <= p.OpensAt {
+		return fmt.Errorf("closes_at falls after opens_at")
+	}
+	if p.Mode == models.ModeUpTo && p.MaxChoices < 1 {
+		return fmt.Errorf("an up_to poll names how many choices it allows")
+	}
+	if p.Mode == models.ModeQuadratic && p.Budget < 1 {
+		return fmt.Errorf("a quadratic poll gives a budget of at least 1")
+	}
+	return nil
+}
+
+func (m *pollManager) GetPoll(ctx context.Context, pollID string) (Poll, error) {
+	var out Poll
+	q := m.st.Query(ctx, objectPoll).Where("id = ?", pollID)
+	if err := m.st.Take(q, objectPoll, &out, ErrPollNotFound); err != nil {
+		return Poll{}, err
+	}
+	return out, nil
+}
+
+func (m *pollManager) AddChoice(ctx context.Context, in Choice) (Choice, error) {
+	if err := m.checks(objectChoice, in, ErrInvalidChoice); err != nil {
+		return Choice{}, err
+	}
+	p, err := m.GetPoll(ctx, in.PollID)
+	if err != nil {
+		return Choice{}, err
+	}
+	if p.State != models.StateDraft {
+		return Choice{}, ErrPollNotDraft
+	}
+	existing, err := m.ListChoices(ctx, in.PollID)
+	if err != nil {
+		return Choice{}, err
+	}
+	in.ID = newID()
+	in.Position = len(existing) + 1
+	in.CreatedAt = m.now()
+	if err := m.st.Insert(ctx, objectChoice, in); err != nil {
+		return Choice{}, fmt.Errorf("AddChoice: %w", err)
+	}
+	return in, nil
+}
+
+func (m *pollManager) ListChoices(ctx context.Context, pollID string) ([]Choice, error) {
+	if _, err := m.GetPoll(ctx, pollID); err != nil {
+		return nil, err
+	}
+	q := m.st.Query(ctx, objectChoice).Where("poll_id = ?", pollID).Order("position asc")
+	out, err := specstore.List[Choice](m.st, q, objectChoice)
+	if err != nil {
+		return nil, fmt.Errorf("ListChoices: %w", err)
+	}
+	return out, nil
+}
