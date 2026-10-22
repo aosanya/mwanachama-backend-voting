@@ -198,3 +198,27 @@ poll and the caller's groups. Whether that is one address whose action the
 host grants to members too, with the module checking publication and groups,
 or two addresses with two actions, is an owner question; the manager method
 serves either.
+
+## As built (VT7)
+
+The poll defaults of decision 343 are declared in `voting.blueprint.json`'s
+`settings` block through shared's S64: `mode` (default `one`), `max_choices`
+and `budget` (default `0`, meaning none, so a poll that needs one must name
+its own and is refused otherwise), `change_allowed` (default false) and
+`per_group` (default `once`). `spec.CheckSettings` holds any layer's values to
+those declarations.
+
+The two layers are the host's. `UseSettings` gives the manager a
+`SettingsLayers` function returning the definition layer and the owner's
+overrides (each with who and when); `Settings` resolves them with
+`spec.ResolveAll`, answering every effective value with the layer it came
+from. Storing the overrides, logging each change and Reset to definition
+(dropping the override) are the host's, the same split
+`mwanachama-backend-files` takes. A manager given no layers resolves to the
+module's defaults.
+
+`CreatePoll` starts from the effective values: an empty `mode` or `per_group`
+and a zero `max_choices` or `budget` are filled from them before the poll is
+checked. `change_allowed` is a bool the request cannot leave unset, so a new
+poll keeps what it was sent; filling it from the setting needs the wire to
+tell "not sent" from false.

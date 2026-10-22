@@ -15,8 +15,9 @@ func (m *pollManager) CreatePoll(ctx context.Context, in Poll) (Poll, error) {
 	}
 	in.State = models.StateDraft
 	in.PublishedAt, in.PublishedBy, in.PublishedGroupIDs = "", "", nil
-	if in.PerGroup == "" {
-		in.PerGroup = models.PerGroupOnce
+	in, err := m.startFromSettings(ctx, in)
+	if err != nil {
+		return Poll{}, err
 	}
 	if err := m.checks(objectPoll, in, ErrInvalidPoll); err != nil {
 		return Poll{}, err

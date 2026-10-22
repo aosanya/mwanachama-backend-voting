@@ -31,13 +31,18 @@ type PollManager interface {
 	UseGroups(fn Groups)
 
 	CountPoll(ctx context.Context, pollID string) (Count, error)
+
+	UseSettings(layers SettingsLayers)
+	Settings(ctx context.Context) (Settings, error)
 }
 
 type pollManager struct {
-	db     *gorm.DB
-	st     *store
-	now    func() string
-	groups Groups
+	db       *gorm.DB
+	st       *store
+	now      func() string
+	groups   Groups
+	spec     *spec.Spec
+	settings SettingsLayers
 }
 
 func NewPollManager(db *gorm.DB, s *spec.Spec) (PollManager, error) {
@@ -53,7 +58,7 @@ func NewPollManager(db *gorm.DB, s *spec.Spec) (PollManager, error) {
 	if err != nil {
 		return nil, fmt.Errorf("NewPollManager: %w", err)
 	}
-	return &pollManager{db: db, st: st, now: nowStamp}, nil
+	return &pollManager{db: db, st: st, now: nowStamp, spec: s}, nil
 }
 
 func nowStamp() string { return time.Now().UTC().Format(specstore.TimeLayout) }
