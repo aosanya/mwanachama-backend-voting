@@ -170,3 +170,31 @@ The checks run in this order, all before the first write:
 **Not checked yet:** the poll's `state`. Nothing opens a poll so far, so an
 answer is taken from a draft inside its window; the state check, and holding
 `up_to`'s N to the final choice list, land with the open step.
+
+## As built (VT4, 2026-10-22)
+
+`CountPoll(ctx, pollID)` answers a `Count`: the poll, each of its choices in
+order with its label, position and `votes`, and `answered`. It is computed on
+every call and stored nowhere.
+
+- **Votes per choice** are the sum, over the poll's ballots, of the votes
+  each ballot placed on that choice. Under `one` and `up_to` that is the
+  number of answers that picked it; under `quadratic` it is the votes the
+  choice received (3 on one choice and 2 and 2 on two give 5 and 2), never
+  the credits spent. A choice nobody picked reads 0.
+- **How many answered** is the number of participation rows on the poll: one
+  per member under `once`, one per member and group under `per_group`.
+- The two are read separately, the ballots for totals and the participations
+  for turnout. Nothing in counting reads a ballot's `response_id` or joins a
+  ballot to who answered, so a secret ballot later changes nothing here.
+- A changed answer replaces its ballot (VT3), so a count never sees the old
+  choice. A missing poll is `ErrPollNotFound`.
+
+**No address is declared yet.** Decisions 344 and 345 give the count two
+audiences with two different gates: a holder of the poll power at any time,
+which is a host power check over an action, and a member of a published
+group once a result is published, which is not a power but a fact about the
+poll and the caller's groups. Whether that is one address whose action the
+host grants to members too, with the module checking publication and groups,
+or two addresses with two actions, is an owner question; the manager method
+serves either.

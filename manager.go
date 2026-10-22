@@ -29,6 +29,8 @@ type PollManager interface {
 
 	AnswerPoll(ctx context.Context, in Answer) (Participation, error)
 	UseGroups(fn Groups)
+
+	CountPoll(ctx context.Context, pollID string) (Count, error)
 }
 
 type pollManager struct {
