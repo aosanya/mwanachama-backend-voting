@@ -209,10 +209,19 @@ publishes: `group_ids` on the body names the groups (at least one, else
 (`ErrNoPublisher`, 401, without one) and `published_at` is the store's.
 Publishing again replaces the groups and the time.
 
-Not built: the holders' read of who chose what, and a member's read of their
-own choice. Both need a ballot read beside its participation, and neither
-the addresses nor the poll's state rules for publishing (draft, open,
-closed; whether the picked groups must be the poll's own) are decided here.
+`GET /polls/{pollID}/responses` (`voting.response.list`, `ListResponses`) is
+the holders' read of who chose what (decision 344), at any time: each
+participation with its ballot's votes, joined through the response id the
+section above keeps for exactly this. `GET /polls/{pollID}/responses/mine`
+(`voting.response.read_own`, `ReadOwnResponses`) is a member's read of their
+own response, the reader from the caller (`ErrNoReader`, 401, without one);
+a member who has not answered reads an empty list. Both answer
+`{"items": [...]}`, since under `per_group` a member may hold one response
+per group. Neither is read by counting or publishing, so a secret ballot
+later drops these two addresses, not the count.
+
+Not decided here: the poll's state rules for publishing (draft, open,
+closed) and whether the picked groups must be the poll's own.
 
 ## As built (VT7)
 

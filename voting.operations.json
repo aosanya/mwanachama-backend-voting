@@ -99,6 +99,29 @@
         { "from": "caller", "as": "reader" }
       ],
       "returns": [{ "body": true }]
+    },
+    "list_responses": {
+      "method": "GET",
+      "path": "/polls/{pollID}/responses",
+      "call": "ListResponses",
+      "action": "voting.response.list",
+      "title": "List who chose what",
+      "description": "A holder's read of who chose what: each response with who answered, through which group, when, and the votes it gave each choice. At any time, before or after publishing.",
+      "args": [{ "from": "path", "as": "pollID", "description": "The poll whose responses to list." }],
+      "returns": [{ "body": true }]
+    },
+    "read_own_responses": {
+      "method": "GET",
+      "path": "/polls/{pollID}/responses/mine",
+      "call": "ReadOwnResponses",
+      "action": "voting.response.read_own",
+      "title": "Read my choice",
+      "description": "A member's read of their own response on a poll, with the votes it gave each choice, and nobody else's.",
+      "args": [
+        { "from": "path", "as": "pollID", "description": "The poll whose own response to read." },
+        { "from": "caller", "as": "reader" }
+      ],
+      "returns": [{ "body": true }]
     }
   },
   "errors": {

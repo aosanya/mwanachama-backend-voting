@@ -33,6 +33,8 @@ type PollManager interface {
 	CountPoll(ctx context.Context, pollID string) (Count, error)
 	PublishResult(ctx context.Context, in Publication) (Poll, error)
 	ReadPublishedCount(ctx context.Context, pollID, caller string) (Count, error)
+	ListResponses(ctx context.Context, pollID string) (Responses, error)
+	ReadOwnResponses(ctx context.Context, pollID, caller string) (Responses, error)
 
 	UseSettings(layers SettingsLayers)
 	Settings(ctx context.Context) (Settings, error)
