@@ -12,16 +12,19 @@ type Route = httpwire.Route
 type Mount = dispatch.Mount
 
 var Sentinels = map[string]error{
-	"ErrPollNotFound":    voting.ErrPollNotFound,
-	"ErrInvalidPoll":     voting.ErrInvalidPoll,
-	"ErrInvalidChoice":   voting.ErrInvalidChoice,
-	"ErrNoCreator":       voting.ErrNoCreator,
-	"ErrPollNotDraft":    voting.ErrPollNotDraft,
-	"ErrNoAnswerer":      voting.ErrNoAnswerer,
-	"ErrOutsideWindow":   voting.ErrOutsideWindow,
-	"ErrNotInPollGroups": voting.ErrNotInPollGroups,
-	"ErrInvalidAnswer":   voting.ErrInvalidAnswer,
-	"ErrAlreadyAnswered": voting.ErrAlreadyAnswered,
+	"ErrPollNotFound":       voting.ErrPollNotFound,
+	"ErrInvalidPoll":        voting.ErrInvalidPoll,
+	"ErrInvalidChoice":      voting.ErrInvalidChoice,
+	"ErrNoCreator":          voting.ErrNoCreator,
+	"ErrPollNotDraft":       voting.ErrPollNotDraft,
+	"ErrNoAnswerer":         voting.ErrNoAnswerer,
+	"ErrOutsideWindow":      voting.ErrOutsideWindow,
+	"ErrNotInPollGroups":    voting.ErrNotInPollGroups,
+	"ErrInvalidAnswer":      voting.ErrInvalidAnswer,
+	"ErrAlreadyAnswered":    voting.ErrAlreadyAnswered,
+	"ErrNoPublisher":        voting.ErrNoPublisher,
+	"ErrInvalidPublication": voting.ErrInvalidPublication,
+	"ErrNoReader":           voting.ErrNoReader,
 }
 
 var AnonymousActions = []string{}

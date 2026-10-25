@@ -17,3 +17,9 @@ var (
 	ErrInvalidAnswer   = errors.New("invalid answer")
 	ErrAlreadyAnswered = errors.New("this poll keeps the first answer")
 )
+
+var (
+	ErrNoPublisher        = errors.New("a result needs a caller to publish it")
+	ErrInvalidPublication = errors.New("invalid publication")
+	ErrNoReader           = errors.New("a published result is read by a caller")
+)

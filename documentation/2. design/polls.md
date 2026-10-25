@@ -190,14 +190,29 @@ every call and stored nowhere.
 - A changed answer replaces its ballot (VT3), so a count never sees the old
   choice. A missing poll is `ErrPollNotFound`.
 
-**No address is declared yet.** Decisions 344 and 345 give the count two
-audiences with two different gates: a holder of the poll power at any time,
-which is a host power check over an action, and a member of a published
-group once a result is published, which is not a power but a fact about the
-poll and the caller's groups. Whether that is one address whose action the
-host grants to members too, with the module checking publication and groups,
-or two addresses with two actions, is an owner question; the manager method
-serves either.
+**Two count addresses, each its own action** (decision 481, 2026-10-25):
+
+- `GET /polls/{pollID}/count` (`voting.count.read`, `CountPoll`) is the
+  holders' count, at any time. The host grants the action to holders of Run
+  a poll; the module checks nothing more.
+- `GET /polls/{pollID}/result` (`voting.result.read`, `ReadPublishedCount`)
+  is a member's read. The reader is bound from the caller, and the count is
+  answered only once the result is published to one of the caller's groups,
+  read through `UseGroups`. An unpublished poll, a poll published only to
+  other groups, and a missing poll all answer `ErrPollNotFound` (404).
+
+Both answer the same `Count`, which carries no answerer.
+
+`POST /polls/{pollID}/result` (`voting.result.publish`, `PublishResult`)
+publishes: `group_ids` on the body names the groups (at least one, else
+`ErrInvalidPublication`, 400), `published_by` comes from the caller
+(`ErrNoPublisher`, 401, without one) and `published_at` is the store's.
+Publishing again replaces the groups and the time.
+
+Not built: the holders' read of who chose what, and a member's read of their
+own choice. Both need a ballot read beside its participation, and neither
+the addresses nor the poll's state rules for publishing (draft, open,
+closed; whether the picked groups must be the poll's own) are decided here.
 
 ## As built (VT7)
 

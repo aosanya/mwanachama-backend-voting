@@ -31,6 +31,8 @@ type PollManager interface {
 	UseGroups(fn Groups)
 
 	CountPoll(ctx context.Context, pollID string) (Count, error)
+	PublishResult(ctx context.Context, in Publication) (Poll, error)
+	ReadPublishedCount(ctx context.Context, pollID, caller string) (Count, error)
 
 	UseSettings(layers SettingsLayers)
 	Settings(ctx context.Context) (Settings, error)
