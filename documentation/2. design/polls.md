@@ -246,3 +246,7 @@ and a zero `max_choices` or `budget` are filled from them before the poll is
 checked. `change_allowed` is a bool the request cannot leave unset, so a new
 poll keeps what it was sent; filling it from the setting needs the wire to
 tell "not sent" from false.
+
+## A manager for one test run (HS280)
+
+`ForRun(runID)` returns a manager that shares the parent's hooks (groups, settings layers and clock) and reaches every table through a store scoped to the run: it reads and writes the `_test` copy of each table, stamps `run_id` on what it inserts, and reads only rows with that run id, so two runs never meet and no row is written to a live table. Replacing an answer deletes the old ballot and participation through that same scoped query, so it cannot touch another run's rows. The parent is not changed. An empty run id is refused. The hooks are copied when `ForRun` is called, so a host sets them first. The host removes a run's rows with the shared engine's `RemoveRun`.

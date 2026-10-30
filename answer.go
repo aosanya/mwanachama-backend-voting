@@ -167,11 +167,10 @@ func (m *pollManager) record(ctx context.Context, pollID, by, group string, vote
 }
 
 func (m *pollManager) forget(ctx context.Context, responseID string) error {
-	db := m.db.WithContext(ctx)
-	if err := db.Exec("DELETE FROM "+m.st.Table(objectBallot)+" WHERE response_id = ?", responseID).Error; err != nil {
+	if err := m.st.Query(ctx, objectBallot).Where("response_id = ?", responseID).Delete(nil).Error; err != nil {
 		return fmt.Errorf("AnswerPoll: %w", err)
 	}
-	if err := db.Exec("DELETE FROM "+m.st.Table(objectParticipation)+" WHERE id = ?", responseID).Error; err != nil {
+	if err := m.st.Query(ctx, objectParticipation).Where("id = ?", responseID).Delete(nil).Error; err != nil {
 		return fmt.Errorf("AnswerPoll: %w", err)
 	}
 	return nil

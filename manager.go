@@ -29,6 +29,7 @@ type PollManager interface {
 
 	AnswerPoll(ctx context.Context, in Answer) (Participation, error)
 	UseGroups(fn Groups)
+	ForRun(runID string) (PollManager, error)
 
 	CountPoll(ctx context.Context, pollID string) (Count, error)
 	PublishResult(ctx context.Context, in Publication) (Poll, error)
