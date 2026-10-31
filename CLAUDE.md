@@ -6,7 +6,7 @@ Guidance for Claude Code working in this repository.
 
 Runs an agency's polls: a question with choices, sent to chosen groups,
 answered inside a window, counted, and published by a holder of the poll
-power. Module path `github.com/aosanya/mwanachama-backend-voting`. Created
+permission. Module path `github.com/aosanya/mwanachama-backend-voting`. Created
 2026-10-22 (member app decisions 340, 341).
 
 **A declared domain from the first commit.** The objects come from
@@ -17,7 +17,7 @@ storage is `mwanachama-backend-shared/specstore` and the routes are built by
 `mwanachama-backend-files` is the nearest template for the file layout.
 
 **Standalone library, no server of its own**, and **no auth model**: every
-address is gated, and the mounting host decides who holds the poll power and
+address is gated, and the mounting host decides who holds the poll permission and
 which groups a member belongs to.
 
 ## The rules that matter most
@@ -27,7 +27,7 @@ which groups a member belongs to.
   [documentation/2. design/polls.md](documentation/2.%20design/polls.md)).
   Never join the two into one object to save a query.
 - **Members see only their own choice.** Counts and who chose what are for
-  holders of the poll power until a result is published (decisions 344, 345).
+  holders of the poll permission until a result is published (decisions 344, 345).
 - **This module names no domain and knows no people.** A member and a group
   are opaque ids the host passes in. Words such as "member", "role",
   "election" or "AGM" never appear in an identifier or a stored value;

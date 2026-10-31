@@ -56,7 +56,7 @@ never stored beside them, so a changed answer cannot leave a stale total.
 
 ## Who sees what
 
-- Holders of the poll power (checked by the host) read counts and the list
+- Holders of the poll permission (checked by the host) read counts and the list
   of who chose what at any time (decision 344).
 - A member reads their own response and nothing else until a result is
   published.
