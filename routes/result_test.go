@@ -34,13 +34,15 @@ func TestAMemberReadsTheCountOnlyOncePublishedToTheirGroup(t *testing.T) {
 	if code, body := get(t, srv, "/polls/"+pollID+"/result"); code != http.StatusNotFound {
 		t.Fatalf("unpublished result = %d %s", code, body)
 	}
-	if code, out := post(t, srv, "/polls/"+pollID+"/result", map[string]any{"group_ids": []string{"g-2"}, "published_by": "someone-else"}); code != http.StatusOK || out["published_by"] != "actor-1" {
+	if code, out := post(t, srv, "/polls/"+pollID+"/result", map[string]any{"group_ids": []string{"g-2"}}); code != http.StatusBadRequest {
+		t.Fatalf("publish to a group the poll did not go to = %d %v", code, out)
+	}
+	if code, out := post(t, srv, "/polls/"+pollID+"/result", map[string]any{"group_ids": []string{"g-1"}, "published_by": "someone-else"}); code != http.StatusOK || out["published_by"] != "actor-1" {
 		t.Fatalf("publish = %d %v", code, out)
 	}
-	if code, body := get(t, srv, "/polls/"+pollID+"/result"); code != http.StatusNotFound {
-		t.Fatalf("result published elsewhere = %d %s", code, body)
+	if code, out := post(t, srv, "/polls/"+pollID+"/result", map[string]any{"group_ids": []string{"g-1"}}); code != http.StatusConflict {
+		t.Fatalf("publish twice = %d %v", code, out)
 	}
-	post(t, srv, "/polls/"+pollID+"/result", map[string]any{"group_ids": []string{"g-1"}})
 	code, body = get(t, srv, "/polls/"+pollID+"/result")
 	if code != http.StatusOK || !strings.Contains(body, `"answered_suppressed":true`) || !strings.Contains(body, `"minimum":5`) || strings.Contains(body, `"votes":1`) || strings.Contains(body, "actor-1") {
 		t.Fatalf("published result = %d %s", code, body)
