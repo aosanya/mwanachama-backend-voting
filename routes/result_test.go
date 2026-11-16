@@ -42,7 +42,7 @@ func TestAMemberReadsTheCountOnlyOncePublishedToTheirGroup(t *testing.T) {
 	}
 	post(t, srv, "/polls/"+pollID+"/result", map[string]any{"group_ids": []string{"g-1"}})
 	code, body = get(t, srv, "/polls/"+pollID+"/result")
-	if code != http.StatusOK || !strings.Contains(body, `"votes":1`) || strings.Contains(body, "actor-1") {
+	if code != http.StatusOK || !strings.Contains(body, `"answered_suppressed":true`) || !strings.Contains(body, `"minimum":5`) || strings.Contains(body, `"votes":1`) || strings.Contains(body, "actor-1") {
 		t.Fatalf("published result = %d %s", code, body)
 	}
 }
