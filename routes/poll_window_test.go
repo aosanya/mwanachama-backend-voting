@@ -34,7 +34,7 @@ func TestAPollWindowClosingBeforeItOpensByInstantAnswers400(t *testing.T) {
 	}
 }
 
-func TestAPollWindowOfTenRealHoursAnswers201AndComesBackInUTC(t *testing.T) {
+func TestAPollWindowOfNineRealHoursAnswers201AndComesBackInUTC(t *testing.T) {
 	l := newLiveVoting(t, "clerk", nil)
 	rec := l.call("POST", "/polls", windowBody("2026-11-08T05:00:00+14:00", "2026-11-08T00:00:00Z"))
 	if rec.Code != http.StatusCreated {

@@ -55,7 +55,7 @@ func TestAPollWindowIsComparedByInstantNotByText(t *testing.T) {
 			}
 		})
 	}
-	t.Run("accepts a ten hour window whose text sorts backwards", func(t *testing.T) {
+	t.Run("accepts a nine hour window whose text sorts backwards", func(t *testing.T) {
 		if _, err := f.pm.CreatePoll(context.Background(), windowedPoll("2026-11-08T05:00:00+14:00", "2026-11-08T00:00:00Z")); err != nil {
 			t.Fatalf("real window refused: %v", err)
 		}
