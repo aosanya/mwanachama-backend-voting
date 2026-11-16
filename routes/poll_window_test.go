@@ -45,3 +45,25 @@ func TestAPollWindowOfTenRealHoursAnswers201AndComesBackInUTC(t *testing.T) {
 		t.Fatalf("window %v to %v", got["opens_at"], got["closes_at"])
 	}
 }
+
+func TestAPollWindowWhoseUTCYearIsOutOfRangeAnswers400NamingTheField(t *testing.T) {
+	l := newLiveVoting(t, "clerk", nil)
+	cases := map[string]struct{ body, field string }{
+		"closes_at in year 10000": {windowBody("2026-11-08T00:00:00Z", "9999-12-31T23:00:00-02:00"), "closes_at"},
+		"opens_at in year -1":     {windowBody("0000-01-01T00:00:00+02:00", "2026-11-09T00:00:00Z"), "opens_at"},
+	}
+	for name, c := range cases {
+		rec := l.call("POST", "/polls", c.body)
+		if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "invalid poll: "+c.field+" falls outside the years 0000 to 9999 in UTC") {
+			t.Errorf("%s answered %d %s, want 400 naming %s", name, rec.Code, rec.Body.String(), c.field)
+		}
+	}
+}
+
+func TestAPollWindowEndingOnTheLastSecondOfYear9999Answers201(t *testing.T) {
+	l := newLiveVoting(t, "clerk", nil)
+	rec := l.call("POST", "/polls", windowBody("2026-11-08T00:00:00Z", "9999-12-31T23:59:59Z"))
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("answered %d %s, want 201", rec.Code, rec.Body.String())
+	}
+}

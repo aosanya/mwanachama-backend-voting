@@ -62,6 +62,41 @@ func TestAPollWindowIsComparedByInstantNotByText(t *testing.T) {
 	})
 }
 
+func TestAPollWindowEndWhoseUTCYearTheReadersCannotParseIsRefusedNamingTheField(t *testing.T) {
+	f := newPolls(t)
+	refused := map[string]Poll{
+		"closes_at in year 10000 once converted to UTC": windowedPoll("2026-11-08T00:00:00Z", "9999-12-31T23:00:00-02:00"),
+		"opens_at in year -1 once converted to UTC":     windowedPoll("0000-01-01T00:00:00+02:00", "2026-11-09T00:00:00Z"),
+	}
+	for name, p := range refused {
+		t.Run("refuses "+name, func(t *testing.T) {
+			field := strings.SplitN(name, " ", 2)[0]
+			_, err := f.pm.CreatePoll(context.Background(), p)
+			if !errors.Is(err, ErrInvalidPoll) || !strings.Contains(err.Error(), field+" falls outside the years 0000 to 9999 in UTC") {
+				t.Fatalf("window %q to %q: %v", p.OpensAt, p.ClosesAt, err)
+			}
+		})
+	}
+	accepted := map[string]Poll{
+		"the last second of year 9999":               windowedPoll("2026-11-08T00:00:00Z", "9999-12-31T23:59:59Z"),
+		"year 0 once converted to UTC, which parses": windowedPoll("0001-01-01T00:00:00+02:00", "2026-11-09T00:00:00Z"),
+	}
+	for name, p := range accepted {
+		t.Run("accepts "+name, func(t *testing.T) {
+			made, err := f.pm.CreatePoll(context.Background(), p)
+			if err != nil {
+				t.Fatalf("window %q to %q refused: %v", p.OpensAt, p.ClosesAt, err)
+			}
+			if _, err := time.Parse(time.RFC3339Nano, made.OpensAt); err != nil {
+				t.Fatalf("stored opens_at %q cannot be read: %v", made.OpensAt, err)
+			}
+			if _, err := time.Parse(time.RFC3339Nano, made.ClosesAt); err != nil {
+				t.Fatalf("stored closes_at %q cannot be read: %v", made.ClosesAt, err)
+			}
+		})
+	}
+}
+
 func TestAPollWindowIsStoredAsUTCInstants(t *testing.T) {
 	f := newPolls(t)
 	p, err := f.pm.CreatePoll(context.Background(), windowedPoll("2026-11-08T10:00:00+02:00", "2026-11-08T20:30:15.5+02:00"))

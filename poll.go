@@ -11,6 +11,11 @@ import (
 	"github.com/aosanya/mwanachama-backend-voting/models"
 )
 
+const (
+	firstReadableYear = 0
+	lastReadableYear  = 9999
+)
+
 func (m *pollManager) CreatePoll(ctx context.Context, in Poll) (Poll, error) {
 	if in.CreatedBy == "" {
 		return Poll{}, ErrNoCreator
@@ -93,20 +98,32 @@ func (m *pollManager) choicesHold(p Poll) ([]Choice, error) {
 }
 
 func windowHold(p Poll) (Poll, error) {
-	opens, err := time.Parse(time.RFC3339Nano, p.OpensAt)
+	opens, err := windowEnd("opens_at", p.OpensAt)
 	if err != nil {
-		return Poll{}, fmt.Errorf("opens_at is not an RFC 3339 timestamp")
+		return Poll{}, err
 	}
-	closes, err := time.Parse(time.RFC3339Nano, p.ClosesAt)
+	closes, err := windowEnd("closes_at", p.ClosesAt)
 	if err != nil {
-		return Poll{}, fmt.Errorf("closes_at is not an RFC 3339 timestamp")
+		return Poll{}, err
 	}
 	if !closes.After(opens) {
 		return Poll{}, fmt.Errorf("closes_at falls after opens_at")
 	}
-	p.OpensAt = opens.UTC().Format(time.RFC3339Nano)
-	p.ClosesAt = closes.UTC().Format(time.RFC3339Nano)
+	p.OpensAt = opens.Format(time.RFC3339Nano)
+	p.ClosesAt = closes.Format(time.RFC3339Nano)
 	return p, nil
+}
+
+func windowEnd(field, value string) (time.Time, error) {
+	at, err := time.Parse(time.RFC3339Nano, value)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("%s is not an RFC 3339 timestamp", field)
+	}
+	at = at.UTC()
+	if year := at.Year(); year < firstReadableYear || year > lastReadableYear {
+		return time.Time{}, fmt.Errorf("%s falls outside the years %04d to %04d in UTC", field, firstReadableYear, lastReadableYear)
+	}
+	return at, nil
 }
 
 func settingsHold(p Poll) error {
