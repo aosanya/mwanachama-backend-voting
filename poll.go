@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/aosanya/mwanachama-backend-shared/specstore"
 
@@ -22,6 +23,10 @@ func (m *pollManager) CreatePoll(ctx context.Context, in Poll) (Poll, error) {
 	}
 	if err := m.checks(objectPoll, in, ErrInvalidPoll); err != nil {
 		return Poll{}, err
+	}
+	in, err = windowHold(in)
+	if err != nil {
+		return Poll{}, fmt.Errorf("%w: %s", ErrInvalidPoll, err)
 	}
 	if err := settingsHold(in); err != nil {
 		return Poll{}, fmt.Errorf("%w: %s", ErrInvalidPoll, err)
@@ -87,12 +92,26 @@ func (m *pollManager) choicesHold(p Poll) ([]Choice, error) {
 	return out, nil
 }
 
+func windowHold(p Poll) (Poll, error) {
+	opens, err := time.Parse(time.RFC3339Nano, p.OpensAt)
+	if err != nil {
+		return Poll{}, fmt.Errorf("opens_at is not an RFC 3339 timestamp")
+	}
+	closes, err := time.Parse(time.RFC3339Nano, p.ClosesAt)
+	if err != nil {
+		return Poll{}, fmt.Errorf("closes_at is not an RFC 3339 timestamp")
+	}
+	if !closes.After(opens) {
+		return Poll{}, fmt.Errorf("closes_at falls after opens_at")
+	}
+	p.OpensAt = opens.UTC().Format(time.RFC3339Nano)
+	p.ClosesAt = closes.UTC().Format(time.RFC3339Nano)
+	return p, nil
+}
+
 func settingsHold(p Poll) error {
 	if len(p.GroupIDs) == 0 {
 		return fmt.Errorf("a poll goes to at least one group")
-	}
-	if p.ClosesAt <= p.OpensAt {
-		return fmt.Errorf("closes_at falls after opens_at")
 	}
 	if p.Mode == models.ModeUpTo && p.MaxChoices < 1 {
 		return fmt.Errorf("an up_to poll names how many choices it allows")

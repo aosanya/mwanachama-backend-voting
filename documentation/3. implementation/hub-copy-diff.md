@@ -35,3 +35,9 @@ One commit here per group of hub commits, each naming the hub hashes: ff2381c7, 
 The poll tests of 105f528e come before the answer-race tests because those tests use their helpers. The hub's later tests and code are taken as they stand at the last commit that touched each file.
 
 `go.mod` lists `gorm.io/driver/postgres` as a direct require from the first commit, because the hub's disclosure test opens a Postgres connection when one is configured.
+
+## Changes made here first
+
+Until the hub imports this module (ISS-105), each change made here first leaves `poll.go` and the new test files different from the hub copy, and the same change is needed there.
+
+- MUN682: `windowHold` in `poll.go` and `poll_window_test.go`, `routes/poll_window_test.go`; see [poll window](poll-window.md).

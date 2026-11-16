@@ -27,7 +27,8 @@ The agency's settings give the defaults a new poll starts with (decisions
 owner's override layer kept beside it, logged, with Reset to definition. The
 settings are declared through shared's module-settings engine (S64).
 
-Save refuses a poll whose window is backwards, whose `up_to` exceeds its
+Save refuses a poll whose window is not two RFC 3339 instants or is backwards (see
+[poll window](../3.%20implementation/poll-window.md)), whose `up_to` exceeds its
 choices, whose quadratic budget is missing or below 1, or that goes to no
 group.
 
