@@ -7,8 +7,11 @@ import (
 	"slices"
 	"time"
 
+	"github.com/aosanya/mwanachama-backend-shared/gormutil"
 	"github.com/aosanya/mwanachama-backend-voting/models"
 )
+
+const answerAttempts = 5
 
 type Answer struct {
 	PollID     string         `json:"poll_id"`
@@ -59,14 +62,24 @@ func (m *pollManager) AnswerPoll(ctx context.Context, in Answer) (Participation,
 	if err := votesFit(p, choices, in.Votes); err != nil {
 		return Participation{}, fmt.Errorf("%w: %s", ErrInvalidAnswer, err)
 	}
-	prior, err := m.priorParticipation(ctx, p.ID, in.AnsweredBy, group)
-	if err != nil {
-		return Participation{}, err
+	return m.recordAnswer(ctx, p, in.AnsweredBy, group, in.Votes, now)
+}
+
+func (m *pollManager) recordAnswer(ctx context.Context, p Poll, by, group string, votes map[string]int, now string) (Participation, error) {
+	for attempt := 0; attempt < answerAttempts; attempt++ {
+		prior, err := m.priorParticipation(ctx, p.ID, by, group)
+		if err != nil {
+			return Participation{}, err
+		}
+		if prior != nil && !p.ChangeAllowed {
+			return Participation{}, ErrAlreadyAnswered
+		}
+		part, err := m.record(ctx, p.ID, by, group, votes, prior, now)
+		if !gormutil.IsUniqueViolation(err) {
+			return part, err
+		}
 	}
-	if prior != nil && !p.ChangeAllowed {
-		return Participation{}, ErrAlreadyAnswered
-	}
-	return m.record(ctx, p.ID, in.AnsweredBy, group, in.Votes, prior, now)
+	return Participation{}, ErrAlreadyAnswered
 }
 
 func insideWindow(p Poll, now string) bool {
@@ -156,25 +169,47 @@ func (m *pollManager) record(ctx context.Context, pollID, by, group string, vote
 	part := Participation{ID: newID(), PollID: pollID, AnsweredBy: by, GroupID: group, AnsweredAt: now}
 	if prior != nil {
 		part.ID = prior.ID
-		if err := m.forget(ctx, prior.ID); err != nil {
-			return Participation{}, err
-		}
-	}
-	if err := m.st.Insert(ctx, objectParticipation, part); err != nil {
-		return Participation{}, fmt.Errorf("AnswerPoll: %w", err)
 	}
 	ballot := Ballot{ID: newID(), PollID: pollID, ResponseID: part.ID, GroupID: group, Votes: votes, CastAt: now}
-	if err := m.st.Insert(ctx, objectBallot, ballot); err != nil {
-		return Participation{}, fmt.Errorf("AnswerPoll: %w", err)
+	err := m.st.InTransaction(ctx, func(tx *store) error {
+		if prior != nil {
+			if err := lockParticipation(ctx, tx, prior.ID); err != nil {
+				return err
+			}
+			if err := forget(ctx, tx, prior.ID); err != nil {
+				return err
+			}
+		}
+		if err := tx.Insert(ctx, objectParticipation, part); err != nil {
+			return fmt.Errorf("AnswerPoll: %w", err)
+		}
+		if err := tx.Insert(ctx, objectBallot, ballot); err != nil {
+			return fmt.Errorf("AnswerPoll: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return Participation{}, err
 	}
 	return part, nil
 }
 
-func (m *pollManager) forget(ctx context.Context, responseID string) error {
-	if err := m.st.Query(ctx, objectBallot).Where("response_id = ?", responseID).Delete(nil).Error; err != nil {
+func lockParticipation(ctx context.Context, tx *store, responseID string) error {
+	q := tx.Query(ctx, objectParticipation)
+	if q.Dialector.Name() != "postgres" {
+		return nil
+	}
+	if err := q.Exec("select pg_advisory_xact_lock(hashtext(?))", tx.Table(objectParticipation)+":"+responseID).Error; err != nil {
 		return fmt.Errorf("AnswerPoll: %w", err)
 	}
-	if err := m.st.Query(ctx, objectParticipation).Where("id = ?", responseID).Delete(nil).Error; err != nil {
+	return nil
+}
+
+func forget(ctx context.Context, tx *store, responseID string) error {
+	if err := tx.Query(ctx, objectBallot).Where("response_id = ?", responseID).Delete(nil).Error; err != nil {
+		return fmt.Errorf("AnswerPoll: %w", err)
+	}
+	if err := tx.Query(ctx, objectParticipation).Where("id = ?", responseID).Delete(nil).Error; err != nil {
 		return fmt.Errorf("AnswerPoll: %w", err)
 	}
 	return nil
