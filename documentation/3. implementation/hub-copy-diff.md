@@ -8,18 +8,19 @@
 scripts/hub-copy-diff.sh [path-to-hub-modules-voting]
 ```
 
-The default path is `../projects/hub-steward/code/wakala-api/modules/voting`, relative to this repository's parent folder. The exit code is 1 when the trees differ in any way, files only here included, so it is 1 today; read the output, not the code. The script and `scripts/hubdiff` are the ones of `mwanachama-backend-forms`, pointed at `modules/voting`.
+The default path is `../projects/hub-steward/code/wakala-api/modules/voting`, relative to this repository's parent folder. The exit code is 1 when the output has any line starting with `diff `, `Binary files ` or `Only in hub`, and 0 otherwise, so `Only in backend` lines alone (this repository's own tests and `spec`) leave it at 0. It is 1 today for the reason given under "Changes made here first": the hub's `poll.go` lacks the MUN682 change. The script and `scripts/hubdiff` are the ones of `mwanachama-backend-forms`, pointed at `modules/voting`; the script here carries the fix of hub issue S70.
 
 ## What it does
 
 1. Copies the `*.go` and `*.json` files of both trees into two temporary folders, leaving out `cmd/`, `documentation/`, `scripts/` and `.git/`.
 2. Rewrites the hub's imports: `wakalaserver/modules/shared/` becomes `github.com/aosanya/mwanachama-backend-shared/` and `wakalaserver/modules/voting` becomes this module's path.
 3. Runs every Go file on both sides through `scripts/hubdiff`, which parses it, drops all comments and prints it with `gofmt`, so comments and layout do not show as differences.
-4. Runs `diff -r backend hub`.
+4. Runs `diff -r backend hub` and prints its output.
+5. Exits 1 if that output has a `diff ` line (a file differs, JSON files included), a `Binary files ` line or an `Only in hub` line (the hub has something this repository lacks); otherwise exits 0.
 
 ## Result of 2026-11-16
 
-No file of the hub differs from its file here after the rewrite, and no file exists only in the hub. What remains is `Only in backend` lines:
+As of the VT5 commit, no file of the hub differed from its file here after the rewrite, and no file existed only in the hub, so the only output was `Only in backend` lines and the script exits 0 on that state. The `*.json` files (`voting.blueprint.json`, `voting.operations.json`, `voting.wakala.json`) were already copied and compared by the same `diff -r`; they are identical. Those `Only in backend` lines are:
 
 | Only here | Reason |
 |---|---|
@@ -40,4 +41,4 @@ The poll tests of 105f528e come before the answer-race tests because those tests
 
 Until the hub imports this module (ISS-105), each change made here first leaves `poll.go` and the new test files different from the hub copy, and the same change is needed there.
 
-- MUN682: `windowHold` in `poll.go` and `poll_window_test.go`, `routes/poll_window_test.go`; see [poll window](poll-window.md).
+- MUN682: until the hub's `poll.go` gets the same change, the script prints a `diff poll.go hub/poll.go` block (the `time` import, the `windowHold` call and function, the RFC 3339 comparison in the validation) and exits 1. Against a scratch copy of the hub whose `poll.go` is this repository's, it exits 0. `windowHold` in `poll.go` and `poll_window_test.go`, `routes/poll_window_test.go`; see [poll window](poll-window.md).
