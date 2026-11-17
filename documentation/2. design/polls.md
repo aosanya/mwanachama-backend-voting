@@ -251,3 +251,24 @@ tell "not sent" from false.
 ## A manager for one test run (HS280)
 
 `ForRun(runID)` returns a manager that shares the parent's hooks (groups, settings layers and clock) and reaches every table through a store scoped to the run: it reads and writes the `_test` copy of each table, stamps `run_id` on what it inserts, and reads only rows with that run id, so two runs never meet and no row is written to a live table. Replacing an answer deletes the old ballot and participation through that same scoped query, so it cannot touch another run's rows. The parent is not changed. An empty run id is refused. The hooks are copied when `ForRun` is called, so a host sets them first. The host removes a run's rows with the shared engine's `RemoveRun`.
+
+## Listing (MUN1303)
+
+`GET /polls/open` (`voting.poll.list_open`, `ListOpenPolls`) lists the polls
+open now to the caller: every poll whose window holds the present and whose
+groups share one with the caller's own groups. A poll sent to several of the
+caller's groups appears once. The caller comes from the mount, never the
+address; without one the answer is `ErrNoReader` (401). A caller in no group
+gets `[]`, never `null`.
+
+Each item is the respondent view of the poll (the same fields `GET
+/polls/{pollID}` gives a resident, so never `created_by` or `published_by`)
+with its `choices` always present and in order, and `answered`. Items are
+ordered by `created_at`, then `id`, so the order is stable between calls.
+
+`answered` comes from the participation record alone: it is true when the
+caller has a participation for the poll, under `per_group: each` in any group.
+The ballot is never read, which keeps the rule that who answered and what they
+chose stay apart, and keeps the list correct if ballots are ever dropped for a
+secret ballot. Another member of the same group sees the poll as unanswered
+until they answer it themselves.
