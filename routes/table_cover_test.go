@@ -134,7 +134,7 @@ func TestEverySentinelIsAKnownVotingError(t *testing.T) {
 		voting.ErrPollNotFound, voting.ErrInvalidPoll, voting.ErrInvalidChoice, voting.ErrNoCreator,
 		voting.ErrPollNotDraft, voting.ErrNoAnswerer, voting.ErrOutsideWindow, voting.ErrNotInPollGroups,
 		voting.ErrInvalidAnswer, voting.ErrAlreadyAnswered, voting.ErrNoPublisher,
-		voting.ErrInvalidPublication, voting.ErrNoReader,
+		voting.ErrInvalidPublication, voting.ErrNoReader, voting.ErrAlreadyPublished,
 	}
 	if len(routes.Sentinels) != len(known) {
 		t.Fatalf("%d sentinels mapped, %d errors declared", len(routes.Sentinels), len(known))
