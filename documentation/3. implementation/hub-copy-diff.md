@@ -42,3 +42,7 @@ The poll tests of 105f528e come before the answer-race tests because those tests
 Until the hub imports this module (ISS-105), each change made here first leaves `poll.go` and the new test files different from the hub copy, and the same change is needed there.
 
 - MUN682: until the hub's `poll.go` gets the same change, the script prints a `diff poll.go hub/poll.go` block (the `time` import, the `windowHold` call and function, the RFC 3339 comparison in the validation) and exits 1. Against a scratch copy of the hub whose `poll.go` is this repository's, it exits 0. `windowHold` in `poll.go` and `poll_window_test.go`, `routes/poll_window_test.go`; see [poll window](poll-window.md).
+
+## Result of 2026-11-19
+
+The hub had gained one change this module lacked (the asker of an open question reads it whatever their groups, with `mine` and `in_audience` on each item), and it is merged here; see [hub import drift](hub-import-drift.md), which lists every difference and its disposition. The script now prints `diff poll.go` and `diff voting.blueprint.json` (this module's window rule, which the hub lacks) and exits 1 for that reason only.

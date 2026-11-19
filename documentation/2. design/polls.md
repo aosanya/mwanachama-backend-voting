@@ -256,10 +256,15 @@ tell "not sent" from false.
 
 `GET /polls/open` (`voting.poll.list_open`, `ListOpenPolls`) lists the polls
 open now to the caller: every poll whose window holds the present and whose
-groups share one with the caller's own groups. A poll sent to several of the
-caller's groups appears once. The caller comes from the mount, never the
-address; without one the answer is `ErrNoReader` (401). A caller in no group
+groups share one with the caller's own groups, and every such poll the caller
+asked, whatever their groups. A poll sent to several of the caller's groups
+appears once. The caller comes from the mount, never the address; without one
+the answer is `ErrNoReader` (401). A caller in no group who asked no open poll
 gets `[]`, never `null`.
+
+`mine` is true on a poll the caller asked and `in_audience` is true when one of
+the poll's groups is the caller's own, so a host offers Send only where
+`in_audience` is true. Neither flag names another person.
 
 Each item is the respondent view of the poll (the same fields `GET
 /polls/{pollID}` gives a resident, so never `created_by` or `published_by`)

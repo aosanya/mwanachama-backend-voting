@@ -6,12 +6,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	voting "github.com/aosanya/mwanachama-backend-voting"
 	"github.com/aosanya/mwanachama-backend-voting/routes"
 )
 
 func newAnsweringServer(t *testing.T, caller string, groups []string) *httptest.Server {
 	t.Helper()
-	pm := newManager(t)
+	return newAnsweringServerOver(t, newManager(t), caller, groups)
+}
+
+func newAnsweringServerOver(t *testing.T, pm voting.PollManager, caller string, groups []string) *httptest.Server {
+	t.Helper()
 	pm.UseGroups(func(context.Context, string) ([]string, error) { return groups, nil })
 	mux := http.NewServeMux()
 	for _, rt := range routes.RoutesFor(pm, routes.Mount{Caller: callerFrom}) {

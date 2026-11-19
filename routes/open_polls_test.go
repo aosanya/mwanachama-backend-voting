@@ -56,11 +56,25 @@ func TestTheOpenPollsRouteIsNotTakenForAPollIDAndMarksAnAnsweredPoll(t *testing.
 }
 
 func TestTheOpenPollsRouteAnswersAnEmptyArrayForACallerInNoGroup(t *testing.T) {
-	srv := newAnsweringServer(t, "actor-1", nil)
-	anOpenPoll(t, srv)
+	pm := newManager(t)
+	anOpenPoll(t, newAnsweringServerOver(t, pm, "actor-1", []string{"g-1"}))
+	srv := newAnsweringServerOver(t, pm, "actor-2", nil)
 	code, _, raw := getList(t, srv, "/polls/open")
 	if code != http.StatusOK || strings.TrimSpace(raw) != "[]" {
 		t.Fatalf("GET /polls/open = %d %s, want 200 []", code, raw)
+	}
+}
+
+func TestTheOpenPollsRouteListsAPollTheCallerAskedWhateverTheirGroups(t *testing.T) {
+	pm := newManager(t)
+	pollID, _ := anOpenPoll(t, newAnsweringServerOver(t, pm, "actor-1", []string{"g-1"}))
+	srv := newAnsweringServerOver(t, pm, "actor-1", nil)
+	code, list, raw := getList(t, srv, "/polls/open")
+	if code != http.StatusOK || len(list) != 1 || list[0]["id"] != pollID {
+		t.Fatalf("GET /polls/open = %d %s", code, raw)
+	}
+	if list[0]["mine"] != true || list[0]["in_audience"] != false {
+		t.Fatalf("mine = %v, in_audience = %v, want true and false", list[0]["mine"], list[0]["in_audience"])
 	}
 }
 

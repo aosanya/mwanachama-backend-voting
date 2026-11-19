@@ -4,5 +4,5 @@
 |---|---|
 | [1. requirements](1.%20requirements/) | What the module must do and the decisions behind it |
 | [2. design](2.%20design/) | Polls, choices and responses; settings; counting; publishing |
-| [3. implementation](3.%20implementation/) | The board (`todo.md`), finished rows (`todo_done.md`), the [hub copy diff](3.%20implementation/hub-copy-diff.md) and the [poll window](3.%20implementation/poll-window.md) |
+| [3. implementation](3.%20implementation/) | The board (`todo.md`), finished rows (`todo_done.md`), the [hub copy diff](3.%20implementation/hub-copy-diff.md), the [hub import drift](3.%20implementation/hub-import-drift.md) and the [poll window](3.%20implementation/poll-window.md) |
 | [4. qa](4.%20qa/) | The suites and what each one holds |
